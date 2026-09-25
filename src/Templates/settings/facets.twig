@@ -1,0 +1,43 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+
+{% set settingsScreen = 'facets' %}
+{% set title = 'Facets' | t('cr-search') %}
+
+{% block content %}
+	<p class="crs-muted">
+		{{ 'The values search results can be filtered and counted by. Copy their handles into `crSearchForm({facets: [...]})` and `filters[handle]` query params, and their labels into your templates. They’re defined in `config/cr-search.php`, as changing them requires rebuilding the search index.' | t('cr-search') | md(inlineOnly=true) }}
+	</p>
+
+	{% set facets = craft.crSearch.getFacetRows() %}
+	{% if facets.error %}
+		<p class="error">{{ facets.error }}</p>
+	{% else %}
+		<div class="tableview">
+			<table class="data fullwidth">
+				<thead>
+					<tr>
+						<th scope="col">{{ 'Handle' | t('app') }}</th>
+						<th scope="col">{{ 'Label' | t('app') }}</th>
+						<th scope="col">{{ 'Type' | t('app') }}</th>
+						<th scope="col">{{ 'Width' | t('cr-search') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for facet in facets.rows %}
+						<tr>
+							<td>{% include '_includes/forms/copytextbtn.twig' with {value: facet.handle} only %}</td>
+							<td>{% include '_includes/forms/copytextbtn.twig' with {value: facet.label} only %}</td>
+							<td>
+								<span class="crs-badge">
+									<span class="crs-icon" aria-hidden="true">{{ iconSvg(facet.icon) }}</span>
+									{{ facet.type | t('cr-search') }}
+								</span>
+							</td>
+							<td>{{ facet.width | t('cr-search') }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	{% endif %}
+{% endblock %}

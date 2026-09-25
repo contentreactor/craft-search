@@ -1,0 +1,32 @@
+{#
+	The search index type select, with each type's settings, shown for the selected type.
+	Variables: settings (Settings), searchIndex (an index that failed validation, or null), disabled
+#}
+{% import '_includes/forms.twig' as forms %}
+{% set variable = craft.crSearch %}
+{% set search = craft.crSearch %}
+{% set indexOverridden = settings.isOverriddenByConfig('searchIndex') %}
+{% set selectedType = searchIndex ? className(searchIndex) : (settings.getSearchIndexType() ?? '') %}
+
+{{ forms.selectField({
+	label: 'Search Index' | t('cr-search'),
+	instructions: 'Where pages’ searchable content is stored and searched.' | t('cr-search'),
+	id: 'searchIndexType',
+	name: 'searchIndexType',
+	options: [{label: 'None' | t('app'), value: ''}] | merge(search.getSearchIndexTypeOptions()),
+	value: selectedType,
+	toggle: true,
+	targetPrefix: 'search-index-',
+	warning: search.getConfigWarning('searchIndex') | md(inlineOnly=true),
+	disabled: disabled or indexOverridden,
+}) }}
+
+{% for index in search.getSearchIndexes(searchIndex) %}
+	<div id="search-index-{{ className(index) | id }}" {% if className(index) != selectedType %}class="hidden"{% endif %}>
+		{% namespace 'searchIndexTypes[' ~ (className(index) | id) ~ ']' %}
+			<fieldset {% if disabled or indexOverridden %}disabled{% endif %}>
+				{{ index.getSettingsHtml() | raw }}
+			</fieldset>
+		{% endnamespace %}
+	</div>
+{% endfor %}

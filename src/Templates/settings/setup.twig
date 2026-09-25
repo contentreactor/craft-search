@@ -1,0 +1,145 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+{% import '_includes/forms.twig' as forms %}
+{# @var settings \ContentReactor\Search\Models\SearchSettings #}
+{# @var searchIndex \ContentReactor\Search\Indexes\SearchIndexInterface|null #}
+
+{% set settingsScreen = 'setup' %}
+{% set title = 'Search Setup' | t('cr-search') %}
+{% set readOnly = not craft.app.config.general.allowAdminChanges %}
+{% set fullPageForm = not readOnly %}
+{% set variable = craft.crSearch %}
+{% set search = craft.crSearch %}
+
+{% macro step(number, icon, heading, description) %}
+	<header class="crs-step__header">
+		<span class="crs-step__number" aria-hidden="true">{{ number }}</span>
+		<span class="crs-card__icon" aria-hidden="true">{{ iconSvg(icon) }}</span>
+		<div>
+			<h2 class="crs-card__title">{{ heading }}</h2>
+			<p class="crs-muted crs-step__description">{{ description }}</p>
+		</div>
+	</header>
+{% endmacro %}
+
+{% block content %}
+	{% if readOnly %}
+		<p class="warning">{{ 'Administrative changes are disallowed in this environment, so search can only be set up where they’re allowed.' | t('cr-search') }}</p>
+	{% else %}
+		{{ actionInput('cr-search/settings/save-setup') }}
+	{% endif %}
+
+	<section class="crs-card crs-step">
+		{{ _self.step(1, 'magnifying-glass', 'Search' | t('cr-search'), 'Sites without a search can leave it off: nothing is indexed, and no endpoint is registered.' | t('cr-search')) }}
+		{{ forms.lightswitchField({
+			label: 'Enable search' | t('cr-search'),
+			name: 'searchEnabled',
+			on: searchEnabled,
+			toggle: 'crs-setup-search',
+			disabled: readOnly,
+		}) }}
+	</section>
+
+	<div id="crs-setup-search" {% if not searchEnabled %}class="hidden"{% endif %}>
+		<section class="crs-card crs-step">
+			{{ _self.step(2, 'database', 'Search Index' | t('cr-search'), 'Where pages’ searchable content is stored. The connection is checked before the setup is saved.' | t('cr-search')) }}
+			{{ include('cr-search/_components/search-index-fields.twig', {
+				settings: settings,
+				searchIndex: searchIndex,
+				disabled: readOnly,
+			}) }}
+		</section>
+
+		<section class="crs-card crs-step">
+			{{ _self.step(3, 'newspaper', 'Indexed Pages' | t('cr-search'), 'Pages are elements with URIs, indexed with the content of their nested and related elements.' | t('cr-search')) }}
+			{% namespace 'settings' %}
+				{{ forms.checkboxSelectField({
+					label: settings.getAttributeLabel('indexedElementTypes'),
+					instructions: 'All element types with URIs are indexed when none are selected.' | t('cr-search'),
+					name: 'indexedElementTypes',
+					options: variable.getElementTypes(true),
+					values: settings.indexedElementTypes,
+					warning: search.getConfigWarning('indexedElementTypes') | md(inlineOnly=true),
+					disabled: readOnly or settings.isOverriddenByConfig('indexedElementTypes'),
+				}) }}
+			{% endnamespace %}
+		</section>
+
+		<section class="crs-card crs-step">
+			{{ _self.step(4, 'link', 'Search Results Endpoint' | t('cr-search'), 'A baseline search results page, which also returns results as JSON. Sites with their own search pages can leave it off.' | t('cr-search')) }}
+			{% namespace 'settings' %}
+				{{ forms.lightswitchField({
+					label: settings.getAttributeLabel('searchEndpointEnabled'),
+					name: 'searchEndpointEnabled',
+					on: settings.searchEndpointEnabled,
+					toggle: 'crs-setup-endpoint',
+					warning: search.getConfigWarning('searchEndpointEnabled') | md(inlineOnly=true),
+					disabled: readOnly or settings.isOverriddenByConfig('searchEndpointEnabled'),
+				}) }}
+
+				<div id="crs-setup-endpoint" {% if not settings.searchEndpointEnabled %}class="hidden"{% endif %}>
+					{{ forms.textField({
+						label: settings.getAttributeLabel('searchEndpointUri'),
+						name: 'searchEndpointUri',
+						value: settings.searchEndpointUri,
+						required: true,
+						code: true,
+						warning: search.getConfigWarning('searchEndpointUri') | md(inlineOnly=true),
+						disabled: readOnly or settings.isOverriddenByConfig('searchEndpointUri'),
+						errors: settings.getErrors('searchEndpointUri'),
+					}) }}
+
+					{{ forms.textField({
+						label: settings.getAttributeLabel('searchResultsPerPage'),
+						name: 'searchResultsPerPage',
+						type: 'number',
+						min: 1,
+						size: 5,
+						value: settings.searchResultsPerPage,
+						warning: search.getConfigWarning('searchResultsPerPage') | md(inlineOnly=true),
+						disabled: readOnly or settings.isOverriddenByConfig('searchResultsPerPage'),
+						errors: settings.getErrors('searchResultsPerPage'),
+					}) }}
+				</div>
+			{% endnamespace %}
+		</section>
+
+		<section class="crs-card crs-step">
+			{{ _self.step(5, 'arrows-rotate', 'Build the Index' | t('cr-search'), 'Pages are reindexed as their content changes, and the index can be rebuilt any time from the Search screen or with `craft cr-search/index/rebuild`.' | t('cr-search')) }}
+			{{ forms.lightswitchField({
+				label: 'Build the search index once the setup is saved' | t('cr-search'),
+				instructions: 'It’s built from the queue.' | t('cr-search'),
+				name: 'rebuild',
+				on: true,
+				disabled: readOnly,
+			}) }}
+		</section>
+	</div>
+{% endblock %}
+
+{% css %}
+	.crs-step__header {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin-bottom: 14px;
+	}
+
+	.crs-step__number {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		width: 22px;
+		height: 22px;
+		margin-top: 5px;
+		border-radius: 50%;
+		background: var(--link-color, #2563eb);
+		color: #fff;
+		font-size: 12px;
+		font-weight: 700;
+	}
+
+	.crs-step__description {
+		margin: 2px 0 0 !important;
+	}
+{% endcss %}

@@ -1,0 +1,55 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+{% import '_includes/forms.twig' as forms %}
+
+{% set settingsScreen = 'synonyms' %}
+{% set title = 'Synonyms' | t('cr-search') %}
+{% set fullPageForm = true %}
+{% set sites = craft.app.sites.getAllSites() %}
+
+{% set columns = {
+	terms: {
+		type: 'singleline',
+		heading: 'Words' | t('cr-search'),
+		info: 'Words that match each other, separated by commas, e.g. “concert, gig, show”.' | t('cr-search'),
+		placeholder: 'concert, gig, show',
+	},
+} %}
+{% if sites | length > 1 %}
+	{% set columns = columns | merge({
+		siteId: {
+			type: 'select',
+			heading: 'Site' | t('app'),
+			width: '25%',
+			options: [{value: '', label: 'All sites' | t('app')}] | merge(sites | map(site => {value: site.id, label: site.name | t('site')})),
+		},
+	}) %}
+{% endif %}
+
+{% block content %}
+	{{ actionInput('cr-search/synonyms/save') }}
+	{{ redirectInput('cr-search/synonyms') }}
+
+	<p class="crs-muted">
+		{{ 'A search for any of a group’s words finds pages with the others too, so a search for “gig tickets” finds pages about concert tickets. Synonyms are single words, and take effect straight away, without rebuilding the search index.' | t('cr-search') }}
+	</p>
+
+	{% if rowErrors | length %}
+		<ul class="errors">
+			{% for index, error in rowErrors %}
+				<li>{{ 'Row {row}: {error}' | t('cr-search', {row: index + 1, error: error}) }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+
+	{{ forms.editableTableField({
+		label: 'Synonyms' | t('cr-search'),
+		id: 'synonyms',
+		name: 'synonyms',
+		cols: columns,
+		rows: rows,
+		allowAdd: true,
+		allowDelete: true,
+		allowReorder: true,
+		addRowLabel: 'Add synonyms' | t('cr-search'),
+	}) }}
+{% endblock %}

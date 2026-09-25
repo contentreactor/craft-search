@@ -1,0 +1,135 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+
+{% set settingsScreen = 'search' %}
+{% set title = 'Search' | t('cr-search') %}
+{% set status = craft.crSearch.getSearchStatus() %}
+{% set canSetUp = currentUser.can('cr-search:settings:system') %}
+
+{% block actionButton %}
+	{% if canSetUp %}
+		<a class="btn" href="{{ url('cr-search/setup') }}">
+			<span class="crs-icon" aria-hidden="true">{{ iconSvg('wand-magic-sparkles') }}</span>
+			{{ 'Search Setup' | t('cr-search') }}
+		</a>
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+	<p class="crs-muted">
+		{{ 'Pages are indexed with the searchable content of everything they hold: their nested elements, however deeply they’re nested, and their related elements, as many relations deep as the relation depth allows. Once content changes, the pages found up its relations tree are reindexed. Elements without URIs aren’t indexed.' | t('cr-search') }}
+	</p>
+
+	{% if status.name is null and status.error is null %}
+		<section class="crs-card crs-empty">
+			<span class="crs-card__icon crs-empty__icon" aria-hidden="true">{{ iconSvg('magnifying-glass') }}</span>
+			<h2>{{ 'Search isn’t set up' | t('cr-search') }}</h2>
+			<p class="crs-muted">{{ 'Without a search index, searchable content is only available to others through the searchable content change event.' | t('cr-search') }}</p>
+			{% if canSetUp %}
+				<a class="btn submit" href="{{ url('cr-search/setup') }}">
+					<span class="crs-icon" aria-hidden="true">{{ iconSvg('wand-magic-sparkles') }}</span>
+					{{ 'Set up search' | t('cr-search') }}
+				</a>
+			{% endif %}
+		</section>
+	{% else %}
+		{% if status.error %}
+			<section class="crs-card crs-card--error">
+				<header class="crs-card__header">
+					<span class="crs-card__icon" aria-hidden="true">{{ iconSvg('triangle-exclamation') }}</span>
+					<h2 class="crs-card__title">{{ 'The search index can’t be used' | t('cr-search') }}</h2>
+				</header>
+				<p class="error">{{ status.error }}</p>
+			</section>
+		{% endif %}
+
+		<div class="crs-stats">
+			<section class="crs-card">
+				<header class="crs-card__header">
+					<span class="crs-card__icon" aria-hidden="true">{{ iconSvg('database') }}</span>
+					<div>
+						<div class="crs-muted crs-stats__label">{{ 'Search Index' | t('cr-search') }}</div>
+						<div class="crs-stats__value">{{ status.name ?? '–' }}</div>
+					</div>
+				</header>
+			</section>
+
+			<section class="crs-card">
+				<header class="crs-card__header">
+					<span class="crs-card__icon" aria-hidden="true">{{ iconSvg('link') }}</span>
+					<div>
+						<div class="crs-muted crs-stats__label">{{ 'Search Results Endpoint' | t('cr-search') }}</div>
+						<div class="crs-stats__value">
+							{% if status.endpointUrl %}
+								<a href="{{ status.endpointUrl }}" target="_blank" rel="noopener">{{ status.endpointUrl }}</a>
+							{% else %}
+								{{ 'Off' | t('app') }}
+							{% endif %}
+						</div>
+					</div>
+				</header>
+			</section>
+
+			{% for site in status.sites %}
+				<section class="crs-card">
+					<header class="crs-card__header">
+						<span class="crs-card__icon" aria-hidden="true">{{ iconSvg('newspaper') }}</span>
+						<div>
+							<div class="crs-muted crs-stats__label">{{ site.name }}</div>
+							<div class="crs-stats__value">{{ '{count, plural, =1{# indexed page} other{# indexed pages}}' | t('cr-search', {count: site.count}) }}</div>
+						</div>
+					</header>
+				</section>
+			{% endfor %}
+		</div>
+
+		{% if not status.error %}
+			<form method="post" accept-charset="UTF-8">
+				{{ csrfInput() }}
+				{{ actionInput('cr-search/settings/rebuild-index') }}
+				{{ redirectInput('cr-search') }}
+				<button type="submit" class="btn">
+					<span class="crs-icon" aria-hidden="true">{{ iconSvg('arrows-rotate') }}</span>
+					{{ 'Rebuild the search index' | t('cr-search') }}
+				</button>
+			</form>
+		{% endif %}
+	{% endif %}
+{% endblock %}
+
+{% css %}
+	.crs-empty {
+		text-align: center;
+		padding: 40px 20px;
+	}
+
+	.crs-empty__icon {
+		width: 48px !important;
+		height: 48px !important;
+		margin-bottom: 8px;
+	}
+
+	.crs-empty__icon svg {
+		width: 22px !important;
+		height: 22px !important;
+	}
+
+	.crs-card--error {
+		border-color: var(--error-color, #cf1124);
+	}
+
+	.crs-stats {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: 0 14px;
+		margin-bottom: 8px;
+	}
+
+	.crs-stats__label {
+		font-size: 12px;
+	}
+
+	.crs-stats__value {
+		font-weight: 600;
+		word-break: break-word;
+	}
+{% endcss %}

@@ -1,0 +1,54 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+
+{% set settingsScreen = 'pins' %}
+{% set title = 'Pinned Results' | t('cr-search') %}
+
+{% block actionButton %}
+	<a class="btn submit add icon" href="{{ url('cr-search/pins/new') }}">{{ 'New pinned results' | t('cr-search') }}</a>
+{% endblock %}
+
+{% block content %}
+	<p class="crs-muted">
+		{{ 'Pages shown first, in the order they’re pinned, when a search’s term is exactly the pinned term, ignoring case. They’re only shown when they match the search’s filters.' | t('cr-search') }}
+	</p>
+
+	{% if pins | length %}
+		<div class="tableview">
+			<table class="data fullwidth">
+				<thead>
+					<tr>
+						<th scope="col">{{ 'Term' | t('cr-search') }}</th>
+						<th scope="col">{{ 'Site' | t('app') }}</th>
+						<th scope="col">{{ 'Pinned Pages' | t('cr-search') }}</th>
+						<th scope="col" class="thin"><span class="visually-hidden">{{ 'Actions' | t('app') }}</span></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for pin in pins %}
+						<tr>
+							<th scope="row"><a href="{{ url('cr-search/pins/' ~ pin.id) }}"><code>{{ pin.term }}</code></a></th>
+							<td>{{ pin.siteId ? (craft.app.sites.getSiteById(pin.siteId).name ?? '') | t('site') : 'All sites' | t('app') }}</td>
+							<td>
+								{% for element in pin.elements %}
+									{{ elementChip(element) }}
+								{% else %}
+									<span class="crs-muted">{{ 'None of the pinned pages exist anymore.' | t('cr-search') }}</span>
+								{% endfor %}
+							</td>
+							<td class="thin">
+								<form method="post" accept-charset="UTF-8">
+									{{ csrfInput() }}
+									{{ actionInput('cr-search/pins/delete') }}
+									{{ hiddenInput('pinId', pin.id) }}
+									<button type="submit" class="delete icon" title="{{ 'Delete' | t('app') }}" aria-label="{{ 'Delete' | t('app') }}"></button>
+								</form>
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	{% else %}
+		<p class="crs-muted">{{ 'No results are pinned yet.' | t('cr-search') }}</p>
+	{% endif %}
+{% endblock %}

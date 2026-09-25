@@ -1,0 +1,71 @@
+{% import '_includes/forms.twig' as forms %}
+{# @var index \ContentReactor\Search\Indexes\ElasticsearchIndex #}
+
+{{ forms.autosuggestField({
+	label: 'URL' | t('app'),
+	name: 'url',
+	value: index.url,
+	suggestEnvVars: true,
+	required: true,
+	code: true,
+	errors: index.getErrors('url'),
+}) }}
+
+{{ forms.autosuggestField({
+	label: 'Index Name' | t('cr-search'),
+	instructions: 'Changing it requires rebuilding the search index.' | t('cr-search'),
+	name: 'index',
+	value: index.index,
+	suggestEnvVars: true,
+	required: true,
+	code: true,
+	errors: index.getErrors('index'),
+}) }}
+
+{{ forms.autosuggestField({
+	label: 'API Key' | t('cr-search'),
+	instructions: 'Preferably an environment variable, as settings are stored in the project config.' | t('cr-search'),
+	name: 'apiKey',
+	value: index.apiKey,
+	suggestEnvVars: true,
+	code: true,
+}) }}
+
+{{ forms.autosuggestField({
+	label: 'Username' | t('app'),
+	instructions: 'Used without an API key.' | t('cr-search'),
+	name: 'username',
+	value: index.username,
+	suggestEnvVars: true,
+}) }}
+
+{{ forms.autosuggestField({
+	label: 'Password' | t('app'),
+	instructions: 'Preferably an environment variable, as settings are stored in the project config.' | t('cr-search'),
+	name: 'password',
+	value: index.password,
+	suggestEnvVars: true,
+}) }}
+
+{{ forms.selectField({
+	label: 'Refresh' | t('cr-search'),
+	instructions: 'When indexed changes become searchable.' | t('cr-search'),
+	name: 'refresh',
+	options: [
+		{label: 'With the index’s next refresh' | t('cr-search'), value: 'false'},
+		{label: 'Once searchable, waiting for them' | t('cr-search'), value: 'wait_for'},
+		{label: 'Right away' | t('cr-search'), value: 'true'},
+	],
+	value: index.refresh is same as(false) ? 'false' : (index.refresh is same as(true) ? 'true' : index.refresh),
+}) }}
+
+{{ forms.textField({
+	label: 'Counted Facet Values' | t('cr-search'),
+	instructions: 'How many values of each facet are counted in results.' | t('cr-search'),
+	name: 'facetSize',
+	type: 'number',
+	min: 1,
+	size: 5,
+	value: index.facetSize,
+	errors: index.getErrors('facetSize'),
+}) }}

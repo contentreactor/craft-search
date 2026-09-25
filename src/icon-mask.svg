@@ -1,0 +1,5 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <!-- Filled shapes only, as the control panel colors masked icons by their fill -->
+    <path fill-rule="evenodd" d="M28 6.5A21.5 21.5 0 1 1 28 49.5A21.5 21.5 0 1 1 28 6.5ZM28 13.5A14.5 14.5 0 1 0 28 42.5A14.5 14.5 0 1 0 28 13.5Z" />
+    <path d="M43.54 36.46L63.54 56.46L56.46 63.54L36.46 43.54Z" />
+</svg>
