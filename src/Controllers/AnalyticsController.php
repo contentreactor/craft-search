@@ -25,6 +25,7 @@ class AnalyticsController extends Controller
 		$this->requireCpRequest();
 		$this->requirePermission(Plugin::getAccessPermission());
 		$this->requirePermission(Plugin::PERMISSION_ANALYTICS);
+		Plugin::getInstance()->requirePro(Craft::t(Plugin::HANDLE, 'Search analytics'));
 
 		return true;
 	}

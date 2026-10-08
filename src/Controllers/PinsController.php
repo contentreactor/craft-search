@@ -27,6 +27,7 @@ class PinsController extends Controller
 		$this->requireCpRequest();
 		$this->requirePermission(Plugin::getAccessPermission());
 		$this->requirePermission(Plugin::PERMISSION_PINS);
+		Plugin::getInstance()->requirePro(Craft::t(Plugin::HANDLE, 'Pinned results'));
 
 		return true;
 	}

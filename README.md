@@ -171,8 +171,27 @@ Event::on(Search::class, Search::EVENT_AFTER_SEARCH, function (SearchEvent $even
 });
 ```
 
+## Editions
+
+Search comes in two editions, from the Plugin Store:
+
+| | Lite | Pro |
+|---|:---:|:---:|
+| Database index, on MySQL and PostgreSQL | ✓ | ✓ |
+| Facets, excluded pages, the search results endpoint, GraphQL | ✓ | ✓ |
+| Elasticsearch index | | ✓ |
+| Synonyms | | ✓ |
+| Pinned results | | ✓ |
+| Search analytics | | ✓ |
+
+On Lite, the Pro screens aren't listed, and searches leave synonyms, pinned results and logging out. A configured Elasticsearch index leaves search off on Lite rather than using it.
+
 ## Support
 
 The plugin registers the `cr-search` handle, the `ContentReactor\Search` namespace and `{{%contentreactor_search_*}}` tables.
 
 Report issues at https://github.com/contentreactor/craft-search/issues, or write to support@contentreactor.com.
+
+## License
+
+The Craft License, see [LICENSE.md](LICENSE.md).

@@ -43,6 +43,7 @@ use craft\web\{
 };
 use craft\web\twig\variables\CraftVariable;
 use MarcusGaius\FieldValueParser\FieldValueParser;
+use MarcusGaius\FieldValueParser\Traits\Editions;
 use yii\base\Event;
 use yii\queue\Queue;
 use yii\web\Response;
@@ -61,6 +62,10 @@ use yii\web\Response;
  */
 class Plugin extends BasePlugin
 {
+	// Lite: the database index, facets, excluded pages, the search results endpoint and GraphQL. Pro: Elasticsearch, synonyms,
+	// pinned results and search analytics.
+	use Editions;
+
 	public const HANDLE = 'cr-search';
 
 	public const PERMISSION_SETTINGS = 'cr-search:settings';
@@ -78,9 +83,9 @@ class Plugin extends BasePlugin
 	 */
 	private const SCREENS = [
 		'search' => ['label' => 'Search', 'icon' => 'magnifying-glass', 'url' => 'cr-search', 'action' => 'cr-search/settings/index', 'permission' => self::PERMISSION_SETTINGS],
-		'analytics' => ['label' => 'Analytics', 'icon' => 'chart-simple', 'url' => 'cr-search/analytics', 'action' => 'cr-search/analytics/index', 'permission' => self::PERMISSION_ANALYTICS],
-		'synonyms' => ['label' => 'Synonyms', 'icon' => 'arrows-left-right', 'url' => 'cr-search/synonyms', 'action' => 'cr-search/synonyms/index', 'permission' => self::PERMISSION_SYNONYMS],
-		'pins' => ['label' => 'Pinned Results', 'icon' => 'thumbtack', 'url' => 'cr-search/pins', 'action' => 'cr-search/pins/index', 'permission' => self::PERMISSION_PINS],
+		'analytics' => ['label' => 'Analytics', 'icon' => 'chart-simple', 'url' => 'cr-search/analytics', 'action' => 'cr-search/analytics/index', 'permission' => self::PERMISSION_ANALYTICS, 'pro' => true],
+		'synonyms' => ['label' => 'Synonyms', 'icon' => 'arrows-left-right', 'url' => 'cr-search/synonyms', 'action' => 'cr-search/synonyms/index', 'permission' => self::PERMISSION_SYNONYMS, 'pro' => true],
+		'pins' => ['label' => 'Pinned Results', 'icon' => 'thumbtack', 'url' => 'cr-search/pins', 'action' => 'cr-search/pins/index', 'permission' => self::PERMISSION_PINS, 'pro' => true],
 		'facets' => ['label' => 'Facets', 'icon' => 'filter', 'url' => 'cr-search/facets', 'action' => 'cr-search/settings/facets', 'permission' => self::PERMISSION_SETTINGS],
 		'setup' => ['label' => 'Setup', 'icon' => 'wand-magic-sparkles', 'url' => 'cr-search/setup', 'action' => 'cr-search/settings/setup', 'permission' => self::PERMISSION_SETTINGS_SYSTEM],
 		'settings' => ['label' => 'Settings', 'icon' => 'sliders', 'url' => 'cr-search/settings', 'action' => 'cr-search/settings/settings', 'permission' => self::PERMISSION_SETTINGS_SYSTEM],
@@ -291,6 +296,7 @@ class Plugin extends BasePlugin
 
 		foreach (self::SCREENS as $handle => $screen) {
 			if (!$user->checkPermission($screen['permission'])) continue;
+			if (($screen['pro'] ?? false) && !$this->isPro()) continue;
 
 			$items[$handle] = [
 				'label' => Craft::t(self::HANDLE, $screen['label']),

@@ -22,6 +22,7 @@ class SynonymsController extends Controller
 		$this->requireCpRequest();
 		$this->requirePermission(Plugin::getAccessPermission());
 		$this->requirePermission(Plugin::PERMISSION_SYNONYMS);
+		Plugin::getInstance()->requirePro(Craft::t(Plugin::HANDLE, 'Synonyms'));
 
 		return true;
 	}

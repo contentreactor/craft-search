@@ -108,6 +108,12 @@ class Search extends Component
 				throw new InvalidConfigException(sprintf('The search index must implement %s.', SearchIndexInterface::class));
 			}
 
+			// A search index the edition doesn't include, e.g. Elasticsearch on Lite, leaves search off rather than running unlicensed
+			if ($index !== null && !in_array($index::class, $this->getIndexTypes(), true)) {
+				Craft::warning(sprintf('The %s search index needs %s Pro, so search is off.', $index::displayName(), Plugin::getInstance()->getPluginName()), __METHOD__);
+				$index = null;
+			}
+
 			$this->index = $index;
 		}
 
@@ -141,6 +147,11 @@ class Search extends Component
 
 		if ($this->hasEventHandlers(self::EVENT_REGISTER_INDEX_TYPES)) {
 			$this->trigger(self::EVENT_REGISTER_INDEX_TYPES, $event);
+		}
+
+		// Elasticsearch is a Pro feature
+		if (!Plugin::getInstance()->isPro()) {
+			return array_values(array_filter($event->types, fn(string $type): bool => $type !== ElasticsearchIndex::class));
 		}
 
 		return $event->types;
@@ -318,7 +329,8 @@ class Search extends Component
 
 		if ($event->results === null) {
 			$query = $event->query;
-			if (empty($query->synonyms) && $query->term !== '') {
+			// Synonyms, pinned results and analytics are Pro features
+			if (empty($query->synonyms) && $query->term !== '' && Plugin::getInstance()->isPro()) {
 				$query->synonyms = Plugin::getInstance()->getSynonyms()->getGroups((int)$query->siteId);
 			}
 			$query->filters = $this->normalizeFilters($query->filters, $facets);
@@ -336,7 +348,7 @@ class Search extends Component
 			$this->trigger(self::EVENT_AFTER_SEARCH, $event);
 		}
 
-		if ($event->query->track) {
+		if ($event->query->track && Plugin::getInstance()->isPro()) {
 			Plugin::getInstance()->getSearchLog()->record($event->query, $event->results);
 		}
 
@@ -353,7 +365,7 @@ class Search extends Component
 	{
 		$index = $this->requireIndex();
 		$pinnedIds = $query->pinnedElementIds
-			?? ($query->term !== '' ? Plugin::getInstance()->getPins()->getElementIds($query->term, (int)$query->siteId) : []);
+			?? ($query->term !== '' && Plugin::getInstance()->isPro() ? Plugin::getInstance()->getPins()->getElementIds($query->term, (int)$query->siteId) : []);
 		if ($query->elementIds !== null) {
 			$pinnedIds = array_intersect($pinnedIds, $query->elementIds);
 		}

@@ -189,6 +189,14 @@ class Variable
 		};
 	}
 
+	/**
+	 * Whether the Pro edition's features are available: Elasticsearch, synonyms, pinned results and search analytics
+	 */
+	public function getIsPro(): bool
+	{
+		return Plugin::getInstance()->isPro();
+	}
+
 	public function getPluginName(): string
 	{
 		return Plugin::getInstance()->getPluginName();

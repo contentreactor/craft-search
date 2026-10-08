@@ -15,6 +15,12 @@
 {% endblock %}
 
 {% block content %}
+	{% if not craft.crSearch.isPro %}
+		<p class="crs-muted" id="crs-pro-notice">
+			{{ 'Synonyms, pinned results, search analytics and Elasticsearch come with {plugin} Pro.' | t('cr-search', { plugin: craft.crSearch.pluginName }) }}
+		</p>
+	{% endif %}
+
 	<p class="crs-muted">
 		{{ 'Pages are indexed with the searchable content of everything they hold: their nested elements, however deeply they’re nested, and their related elements, as many relations deep as the relation depth allows. Once content changes, the pages found up its relations tree are reindexed. Elements without URIs aren’t indexed.' | t('cr-search') }}
 	</p>

@@ -2,7 +2,7 @@
 	"name": "contentreactor/craft-search",
 	"description": "Search for the pages Field Value Parser parses: database and Elasticsearch indexes, facets and a search results endpoint.",
 	"type": "craft-plugin",
-	"license": "MIT",
+	"license": "proprietary",
 	"autoload": {
 		"psr-4": {
 			"ContentReactor\\Search\\": "src/"
@@ -28,14 +28,16 @@
 	"require": {
 		"php": "^8.2",
 		"craftcms/cms": "^5.9",
-		"marcusgaius/field-value-parser": "^1.0"
+		"marcusgaius/field-value-parser": "^1.1"
 	},
 	"extra": {
 		"handle": "cr-search",
 		"name": "Search",
 		"developer": "ContentReactor",
 		"developerUrl": "https://www.contentreactor.com/",
-		"class": "ContentReactor\\Search\\Plugin"
+		"class": "ContentReactor\\Search\\Plugin",
+		"documentationUrl": "https://github.com/contentreactor/craft-search",
+		"changelogUrl": "https://raw.githubusercontent.com/contentreactor/craft-search/main/CHANGELOG.md"
 	},
 	"config": {
 		"allow-plugins": {
