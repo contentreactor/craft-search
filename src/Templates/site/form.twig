@@ -1,0 +1,84 @@
+{#
+	Baseline search form, rendered by `crSearchForm()`.
+	Variables: action, term, placeholder, and facets: [{facet: Facet, options: [{value, label, count}], selected: values, or min and max}]
+	A facet's `width` is how much of a row its filter wants, as a `crs-search__facet--{width}` class.
+	Options are counted with the other filters, and ones nothing would match can't be picked.
+#}
+{% set params = craft.app.request.queryParams | withoutKey('page') %}
+{% set active = [] %}
+
+<form class="crs-search" action="{{ action }}" method="get" role="search">
+	<input class="crs-search__term" type="search" name="q" value="{{ term }}" placeholder="{{ placeholder }}" aria-label="{{ 'Search' | t('cr-search') }}">
+	<button class="crs-search__submit" type="submit">{{ 'Search' | t('cr-search') }}</button>
+
+	{% if facets | length %}
+		<div class="crs-search__facets">
+			{% for item in facets %}
+				{% set facet = item.facet %}
+				{% set name = 'filters[' ~ facet.handle ~ ']' %}
+				{% set label = facet.label | t('site') %}
+				{% set class = 'crs-search__facet crs-search__facet--' ~ facet.width.value %}
+
+				{% if facet.type.value in ['number', 'date'] %}
+					{% set isDate = facet.type.value == 'date' %}
+					{% set min = item.selected.min ?? '' %}
+					{% set max = item.selected.max ?? '' %}
+					<fieldset class="{{ class }} crs-search__facet--range">
+						<legend class="crs-search__label">{{ label }}</legend>
+						<label class="crs-search__bound">
+							<span>{{ 'From' | t('cr-search') }}</span>
+							<input type="{{ isDate ? 'date' : 'number' }}" name="{{ name }}[min]" value="{{ min }}" {%- if max is not same as('') %} max="{{ max }}"{% endif %}>
+						</label>
+						<label class="crs-search__bound">
+							<span>{{ 'To' | t('cr-search') }}</span>
+							<input type="{{ isDate ? 'date' : 'number' }}" name="{{ name }}[max]" value="{{ max }}" {%- if min is not same as('') %} min="{{ min }}"{% endif %}>
+						</label>
+					</fieldset>
+
+					{% if min is not same as('') or max is not same as('') %}
+						{% set minLabel = isDate and min is not same as('') ? min | date('short') : min %}
+						{% set maxLabel = isDate and max is not same as('') ? max | date('short') : max %}
+						{% set active = active | merge([{
+							label: label,
+							value: min is not same as('') and max is not same as('')
+								? '{min} – {max}' | t('cr-search', {min: minLabel, max: maxLabel})
+								: (min is not same as('')
+									? 'from {min}' | t('cr-search', {min: minLabel})
+									: 'until {max}' | t('cr-search', {max: maxLabel})),
+							handle: facet.handle,
+						}]) %}
+					{% endif %}
+				{% else %}
+					<label class="{{ class }}">
+						<span class="crs-search__label">{{ label }}</span>
+						<select name="{{ name }}">
+							<option value="">{{ 'All' | t('cr-search') }}</option>
+							{% for option in item.options %}
+								{% set selected = option.value in item.selected %}
+								<option value="{{ option.value }}" {{- selected ? ' selected' }} {{- not option.count and not selected ? ' disabled' }}>{{ option.label }} ({{ option.count }})</option>
+								{% if selected %}
+									{% set active = active | merge([{label: label, value: option.label, handle: facet.handle}]) %}
+								{% endif %}
+							{% endfor %}
+						</select>
+					</label>
+				{% endif %}
+			{% endfor %}
+		</div>
+
+		{% if active | length %}
+			<div class="crs-search__active" aria-label="{{ 'Active filters' | t('cr-search') }}">
+				{% for filter in active %}
+					{% set remaining = params | merge({filters: (params.filters ?? {}) | withoutKey(filter.handle)}) %}
+					<a class="crs-search__chip" href="{{ craft.crSearch.searchUrl(remaining) }}" title="{{ 'Remove filter' | t('cr-search') }}">
+						<span>{{ filter.label }}: <strong>{{ filter.value }}</strong></span>
+						<span aria-hidden="true">×</span>
+					</a>
+				{% endfor %}
+				{% if active | length > 1 %}
+					<a class="crs-search__clear" href="{{ craft.crSearch.searchUrl(params | withoutKey('filters')) }}">{{ 'Clear all' | t('cr-search') }}</a>
+				{% endif %}
+			</div>
+		{% endif %}
+	{% endif %}
+</form>

@@ -1,0 +1,141 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+{% import '_includes/forms.twig' as forms %}
+{# @var settings \ContentReactor\Search\Models\SearchSettings #}
+
+{% set settingsScreen = 'analytics' %}
+{% set title = 'Search Analytics' | t('cr-search') %}
+{% set sites = craft.app.sites.getAllSites() %}
+
+{% macro termTable(rows, emptyText, canPin = false) %}
+	{% if rows | length %}
+		<div class="tableview">
+			<table class="data fullwidth">
+				<thead>
+					<tr>
+						<th scope="col">{{ 'Term' | t('cr-search') }}</th>
+						<th scope="col" class="crs-number">{{ 'Searches' | t('cr-search') }}</th>
+						<th scope="col" class="crs-number">{{ 'Average Results' | t('cr-search') }}</th>
+						<th scope="col">{{ 'Last Searched' | t('cr-search') }}</th>
+						{% if canPin %}<th scope="col" class="thin"><span class="visually-hidden">{{ 'Actions' | t('app') }}</span></th>{% endif %}
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in rows %}
+						<tr>
+							<td><code>{{ row.term }}</code></td>
+							<td class="crs-number">{{ row.searches | number }}</td>
+							<td class="crs-number">{{ row.averageResults | number }}</td>
+							<td>{{ row.lastSearched | datetime('short') }}</td>
+							{% if canPin %}
+								<td class="thin"><a href="{{ url('cr-search/pins/new', {term: row.term}) }}">{{ 'Pin results' | t('cr-search') }}</a></td>
+							{% endif %}
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	{% else %}
+		<p class="crs-muted">{{ emptyText }}</p>
+	{% endif %}
+{% endmacro %}
+
+{% block content %}
+	{% if not settings.logSearches %}
+		<p class="warning">{{ 'Searches aren’t being logged. Turn on logging in the search settings to collect analytics.' | t('cr-search') }}</p>
+	{% endif %}
+
+	<form class="crs-analytics__filters" method="get">
+		{{ forms.selectField({
+			label: 'Period' | t('cr-search'),
+			name: 'days',
+			value: days,
+			options: periods | map(period => {
+				value: period,
+				label: '{days, plural, =1{Last day} other{Last # days}}' | t('cr-search', {days: period}),
+			}),
+		}) }}
+
+		{% if sites | length > 1 %}
+			{{ forms.selectField({
+				label: 'Site' | t('app'),
+				name: 'siteId',
+				value: siteId,
+				options: [{value: '', label: 'All sites' | t('app')}] | merge(sites | map(site => {value: site.id, label: site.name | t('site')})),
+			}) }}
+		{% endif %}
+
+		<button type="submit" class="btn">{{ 'Show' | t('cr-search') }}</button>
+	</form>
+
+	<div class="crs-stats">
+		{% for stat in [
+			{icon: 'magnifying-glass', label: 'Searches' | t('cr-search'), value: summary.searches | number},
+			{icon: 'list', label: 'Distinct Terms' | t('cr-search'), value: summary.terms | number},
+			{icon: 'circle-question', label: 'Searches Without Results' | t('cr-search'), value: summary.searches
+				? '{count} ({percent}%)' | t('cr-search', {count: summary.withoutResults | number, percent: (summary.withoutResults / summary.searches * 100) | round})
+				: '0'},
+		] %}
+			<section class="crs-card">
+				<header class="crs-card__header">
+					<span class="crs-card__icon" aria-hidden="true">{{ iconSvg(stat.icon) }}</span>
+					<div>
+						<div class="crs-muted crs-stats__label">{{ stat.label }}</div>
+						<div class="crs-stats__value">{{ stat.value }}</div>
+					</div>
+				</header>
+			</section>
+		{% endfor %}
+	</div>
+
+	<h2>{{ 'Searches Without Results' | t('cr-search') }}</h2>
+	<p class="crs-muted">
+		{{ 'What visitors looked for and didn’t find: content that’s missing, or other words for content that’s there.' | t('cr-search') }}
+		{% if currentUser.can('cr-search:synonyms') %}
+			<a href="{{ url('cr-search/synonyms') }}">{{ 'Add synonyms for them' | t('cr-search') }}</a>
+		{% endif %}
+	</p>
+	{{ _self.termTable(searchesWithoutResults, 'Every search found something.' | t('cr-search'), currentUser.can('cr-search:pins')) }}
+
+	<hr>
+
+	<h2>{{ 'Top Searches' | t('cr-search') }}</h2>
+	{{ _self.termTable(topSearches, 'Nothing has been searched for yet.' | t('cr-search')) }}
+
+	<p class="crs-muted">
+		{{- settings.searchLogDays > 0
+			? '{days, plural, =1{Searches are kept for a day.} other{Searches are kept for # days.}}' | t('cr-search', {days: settings.searchLogDays})
+			: 'Searches are kept forever.' | t('cr-search') -}}
+	</p>
+{% endblock %}
+
+{% css %}
+	.crs-analytics__filters {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 14px;
+		margin-bottom: 14px;
+	}
+
+	.crs-analytics__filters .field {
+		margin: 0 !important;
+	}
+
+	.crs-stats {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+		gap: 0 14px;
+	}
+
+	.crs-stats__label {
+		font-size: 12px;
+	}
+
+	.crs-stats__value {
+		font-weight: 600;
+	}
+
+	.crs-number {
+		text-align: right !important;
+	}
+{% endcss %}

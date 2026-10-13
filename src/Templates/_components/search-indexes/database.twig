@@ -1,0 +1,25 @@
+{% import '_includes/forms.twig' as forms %}
+{# @var index \ContentReactor\Search\Indexes\DatabaseIndex #}
+
+{{ forms.selectField({
+	label: 'Full-Text Search' | t('cr-search'),
+	instructions: 'Whether words are matched with the database’s full-text search, which MySQL and PostgreSQL have.' | t('cr-search'),
+	name: 'useFullText',
+	options: [
+		{label: 'On MySQL and PostgreSQL' | t('cr-search'), value: ''},
+		{label: 'Always' | t('cr-search'), value: '1'},
+		{label: 'Never' | t('cr-search'), value: '0'},
+	],
+	value: index.useFullText is null ? '' : (index.useFullText ? '1' : '0'),
+}) }}
+
+{{ forms.textField({
+	label: 'Shortest Full-Text Word' | t('cr-search'),
+	instructions: 'Shorter words are looked for anywhere in pages instead. On MySQL, the full-text index has its own limit, see `innodb_ft_min_token_size`.' | t('cr-search') | md(inlineOnly=true),
+	name: 'minFullTextWordLength',
+	type: 'number',
+	min: 1,
+	size: 5,
+	value: index.minFullTextWordLength,
+	errors: index.getErrors('minFullTextWordLength'),
+}) }}

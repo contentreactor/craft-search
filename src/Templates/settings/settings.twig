@@ -1,0 +1,174 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+{% import '_includes/forms.twig' as forms %}
+{# @var settings \ContentReactor\Search\Models\SearchSettings #}
+{# @var searchIndex \ContentReactor\Search\Indexes\SearchIndexInterface|null #}
+
+{% set settingsScreen = 'settings' %}
+{% set title = 'Search Settings' | t('cr-search') %}
+{% set readOnly = not craft.app.config.general.allowAdminChanges %}
+{% set fullPageForm = not readOnly %}
+{% set variable = craft.crSearch %}
+{% set search = craft.crSearch %}
+
+{% macro heading(icon, text) %}
+	<h2 class="crs-heading">
+		<span class="crs-card__icon" aria-hidden="true">{{ iconSvg(icon) }}</span>
+		{{ text }}
+	</h2>
+{% endmacro %}
+
+{% block content %}
+	{% if readOnly %}
+		<p class="warning">{{ 'Administrative changes are disallowed in this environment.' | t('app') }}</p>
+	{% else %}
+		{{ actionInput('cr-search/settings/save-settings') }}
+		{{ redirectInput('cr-search/settings') }}
+	{% endif %}
+
+	{{ _self.heading('database', 'Search Index' | t('cr-search')) }}
+
+	{{ include('cr-search/_components/search-index-fields.twig', {
+		settings: settings,
+		searchIndex: searchIndex,
+		disabled: readOnly,
+	}) }}
+
+	{% namespace 'settings' %}
+		{{ forms.checkboxSelectField({
+			label: settings.getAttributeLabel('indexedElementTypes'),
+			instructions: 'The element types whose pages are indexed. All element types with URIs are indexed when none are selected.' | t('cr-search'),
+			name: 'indexedElementTypes',
+			options: variable.getElementTypes(true),
+			values: settings.indexedElementTypes,
+			warning: search.getConfigWarning('indexedElementTypes') | md(inlineOnly=true),
+			disabled: readOnly or settings.isOverriddenByConfig('indexedElementTypes'),
+			errors: settings.getErrors('indexedElementTypes'),
+		}) }}
+
+		{{ forms.checkboxSelectField({
+			label: settings.getAttributeLabel('excludedSources'),
+			instructions: 'Sections, category groups and volumes whose pages aren’t indexed. Editors can hide single pages with a Hide from Search field. The index is rebuilt once these change.' | t('cr-search'),
+			name: 'excludedSources',
+			options: variable.getExcludableSourceOptions(),
+			values: settings.excludedSources,
+			warning: search.getConfigWarning('excludedSources') | md(inlineOnly=true),
+			disabled: readOnly or settings.isOverriddenByConfig('excludedSources'),
+		}) }}
+
+		{{ forms.checkboxSelectField({
+			label: settings.getAttributeLabel('excludedEntryTypes'),
+			instructions: 'Entry types whose entries aren’t indexed, in any section.' | t('cr-search'),
+			name: 'excludedEntryTypes',
+			options: variable.getEntryTypeOptions(),
+			values: settings.excludedEntryTypes,
+			warning: search.getConfigWarning('excludedEntryTypes') | md(inlineOnly=true),
+			disabled: readOnly or settings.isOverriddenByConfig('excludedEntryTypes'),
+		}) }}
+
+		{{ forms.lightswitchField({
+			label: settings.getAttributeLabel('reindexChangedContentOnly'),
+			instructions: 'Whether saving an element only reindexes pages when its searchable values, status, URI, dates or facet values changed. They’re compared before and after saving, which makes saves take longer.' | t('cr-search'),
+			name: 'reindexChangedContentOnly',
+			on: settings.reindexChangedContentOnly,
+			warning: search.getConfigWarning('reindexChangedContentOnly') | md(inlineOnly=true),
+			disabled: readOnly or settings.isOverriddenByConfig('reindexChangedContentOnly'),
+		}) }}
+
+		<hr>
+		{{ _self.heading('link', 'Search Results Endpoint' | t('cr-search')) }}
+
+		{{ forms.lightswitchField({
+			label: settings.getAttributeLabel('searchEndpointEnabled'),
+			instructions: 'Whether the search results endpoint is registered while a search index is configured. Turning it off frees up its URI.' | t('cr-search'),
+			name: 'searchEndpointEnabled',
+			on: settings.searchEndpointEnabled,
+			toggle: 'crs-endpoint-settings',
+			warning: search.getConfigWarning('searchEndpointEnabled') | md(inlineOnly=true),
+			disabled: readOnly or settings.isOverriddenByConfig('searchEndpointEnabled'),
+		}) }}
+
+		<div id="crs-endpoint-settings" {% if not settings.searchEndpointEnabled %}class="hidden"{% endif %}>
+			{{ forms.textField({
+				label: settings.getAttributeLabel('searchEndpointUri'),
+				instructions: 'The site URI search results are found at, which also accepts requests for JSON.' | t('cr-search'),
+				name: 'searchEndpointUri',
+				value: settings.searchEndpointUri,
+				required: true,
+				code: true,
+				warning: search.getConfigWarning('searchEndpointUri') | md(inlineOnly=true),
+				disabled: readOnly or settings.isOverriddenByConfig('searchEndpointUri'),
+				errors: settings.getErrors('searchEndpointUri'),
+			}) }}
+
+			{{ forms.textField({
+				label: settings.getAttributeLabel('searchResultsPerPage'),
+				name: 'searchResultsPerPage',
+				type: 'number',
+				min: 1,
+				size: 5,
+				value: settings.searchResultsPerPage,
+				warning: search.getConfigWarning('searchResultsPerPage') | md(inlineOnly=true),
+				disabled: readOnly or settings.isOverriddenByConfig('searchResultsPerPage'),
+				errors: settings.getErrors('searchResultsPerPage'),
+			}) }}
+
+			{{ forms.autosuggestField({
+				label: settings.getAttributeLabel('searchResultsTemplate'),
+				instructions: 'A site template rendering search results instead of the baseline one. It can include `cr-search/_results` in the site’s layout.' | t('cr-search') | md(inlineOnly=true),
+				name: 'searchResultsTemplate',
+				value: settings.searchResultsTemplate,
+				suggestions: craft.cp.getTemplateSuggestions(),
+				warning: search.getConfigWarning('searchResultsTemplate') | md(inlineOnly=true),
+				disabled: readOnly or settings.isOverriddenByConfig('searchResultsTemplate'),
+				errors: settings.getErrors('searchResultsTemplate'),
+			}) }}
+
+			{{ forms.autosuggestField({
+				label: settings.getAttributeLabel('searchFormTemplate'),
+				instructions: 'A site template rendering `crSearchForm()` instead of the baseline one.' | t('cr-search') | md(inlineOnly=true),
+				name: 'searchFormTemplate',
+				value: settings.searchFormTemplate,
+				suggestions: craft.cp.getTemplateSuggestions(),
+				warning: search.getConfigWarning('searchFormTemplate') | md(inlineOnly=true),
+				disabled: readOnly or settings.isOverriddenByConfig('searchFormTemplate'),
+				errors: settings.getErrors('searchFormTemplate'),
+			}) }}
+		</div>
+
+		<hr>
+		{{ _self.heading('chart-simple', 'Search Analytics' | t('cr-search')) }}
+
+		{{ forms.lightswitchField({
+			label: settings.getAttributeLabel('logSearches'),
+			instructions: 'Whether searches from the search results endpoint and GraphQL are logged for search analytics. Only their terms, sites and result counts are logged, nothing identifying who searched.' | t('cr-search'),
+			name: 'logSearches',
+			on: settings.logSearches,
+			toggle: 'crs-log-settings',
+			warning: search.getConfigWarning('logSearches') | md(inlineOnly=true),
+			disabled: readOnly or settings.isOverriddenByConfig('logSearches'),
+		}) }}
+
+		<div id="crs-log-settings" {% if not settings.logSearches %}class="hidden"{% endif %}>
+			{{ forms.textField({
+				label: settings.getAttributeLabel('searchLogDays'),
+				instructions: 'How many days logged searches are kept. Older ones are deleted with Craft’s garbage collection. 0 keeps them forever.' | t('cr-search'),
+				name: 'searchLogDays',
+				type: 'number',
+				min: 0,
+				unit: 'days' | t('app'),
+				value: settings.searchLogDays,
+				warning: search.getConfigWarning('searchLogDays') | md(inlineOnly=true),
+				disabled: readOnly or settings.isOverriddenByConfig('searchLogDays'),
+				errors: settings.getErrors('searchLogDays'),
+			}) }}
+		</div>
+	{% endnamespace %}
+{% endblock %}
+
+{% css %}
+	.crs-heading {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+{% endcss %}

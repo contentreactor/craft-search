@@ -1,0 +1,48 @@
+{
+	"name": "contentreactor/craft-search",
+	"description": "Find pages by everything they show",
+	"type": "craft-plugin",
+	"license": "proprietary",
+	"autoload": {
+		"psr-4": {
+			"ContentReactor\\Search\\": "src/"
+		}
+	},
+	"authors": [
+		{
+			"name": "ContentReactor",
+			"homepage": "https://www.contentreactor.com/"
+		},
+		{
+			"name": "ContentReactor Support",
+			"email": "support@contentreactor.com"
+		}
+	],
+	"support": {
+		"email": "support@contentreactor.com",
+		"issues": "https://github.com/contentreactor/craft-search/issues",
+		"source": "https://github.com/contentreactor/craft-search"
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"require": {
+		"php": "^8.2",
+		"craftcms/cms": "^5.9",
+		"marcusgaius/field-value-parser": "^1.1"
+	},
+	"extra": {
+		"handle": "cr-search",
+		"name": "Search",
+		"developer": "ContentReactor",
+		"developerUrl": "https://www.contentreactor.com/",
+		"class": "ContentReactor\\Search\\Plugin",
+		"documentationUrl": "https://github.com/contentreactor/craft-search",
+		"changelogUrl": "https://raw.githubusercontent.com/contentreactor/craft-search/main/CHANGELOG.md"
+	},
+	"config": {
+		"allow-plugins": {
+			"yiisoft/yii2-composer": true,
+			"craftcms/plugin-installer": true
+		}
+	}
+}

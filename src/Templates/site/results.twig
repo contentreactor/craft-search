@@ -1,0 +1,429 @@
+{#
+	Baseline search results page. Sites with their own layout set the `searchResultsTemplate` setting to a template
+	extending it and including `cr-search/_results`.
+	Its styles are only on this page, so the form and results take on a site's own styles when it includes them.
+#}
+<!DOCTYPE html>
+<html lang="{{ currentSite.language }}">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<meta name="color-scheme" content="light dark">
+	<title>{{ query.term ? query.term ~ ' – ' }}{{ 'Search' | t('cr-search') }} – {{ siteName }}</title>
+	<style>
+		/* Sites can restyle the page by overriding these */
+		:root {
+			--crs-accent: #e31a44;
+			--crs-text: #07151f;
+			--crs-muted: #5b6770;
+			--crs-border: #dde1e4;
+			--crs-surface: #ffffff;
+			--crs-background: #f5f6f7;
+			--crs-radius: 10px;
+		}
+
+		@media (prefers-color-scheme: dark) {
+			:root {
+				--crs-accent: #ff5876;
+				--crs-text: #eef1f3;
+				--crs-muted: #9aa5ad;
+				--crs-border: #2b3944;
+				--crs-surface: #0f212e;
+				--crs-background: #07151f;
+			}
+		}
+
+		*, *::before, *::after {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			background: var(--crs-background);
+			color: var(--crs-text);
+			font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+		}
+
+		.crs-search-page {
+			max-width: 46rem;
+			margin: 0 auto;
+			padding: clamp(2rem, 8vw, 5rem) 1rem 4rem;
+		}
+
+		.crs-search-page__site {
+			margin: 0 0 .25rem;
+			color: var(--crs-muted);
+			font-size: .875rem;
+			font-weight: 600;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+		}
+
+		.crs-search-page__site a {
+			color: inherit;
+			text-decoration: none;
+		}
+
+		.crs-search-page__site a:hover {
+			color: var(--crs-accent);
+		}
+
+		.crs-search-page h1 {
+			margin: 0 0 1.5rem;
+			font-size: clamp(2rem, 6vw, 2.75rem);
+			line-height: 1.1;
+			letter-spacing: -.02em;
+		}
+
+		/* Form */
+		.crs-search {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .75rem;
+		}
+
+		.crs-search__term {
+			flex: 1 1 16rem;
+			min-width: 0;
+			padding: .875rem 1rem .875rem 2.875rem;
+			border: 1px solid var(--crs-border);
+			border-radius: var(--crs-radius);
+			background: var(--crs-surface) no-repeat 1rem center / 1.125rem;
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6770' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m15.5 15.5 5 5'/%3E%3C/svg%3E");
+			color: inherit;
+			font: inherit;
+			font-size: 1.125rem;
+		}
+
+		.crs-search__term:focus,
+		.crs-search select:focus,
+		.crs-search input:focus,
+		.crs-search__chip:focus-visible {
+			outline: 2px solid var(--crs-accent);
+			outline-offset: 1px;
+			border-color: transparent;
+		}
+
+		.crs-search__submit {
+			padding: .875rem 1.5rem;
+			border: 0;
+			border-radius: var(--crs-radius);
+			background: var(--crs-accent);
+			color: #fff;
+			font: inherit;
+			font-weight: 600;
+			cursor: pointer;
+		}
+
+		.crs-search__submit:hover {
+			filter: brightness(.92);
+		}
+
+		.crs-search__submit:focus-visible {
+			outline: 2px solid var(--crs-accent);
+			outline-offset: 2px;
+		}
+
+		/* Facets: a 12 column grid, each facet spanning the columns its width asks for. Narrower facets fill gaps wider ones leave. */
+		.crs-search__facets {
+			display: grid;
+			grid-template-columns: repeat(12, minmax(0, 1fr));
+			grid-auto-flow: row dense;
+			gap: 1rem;
+			flex-basis: 100%;
+			padding: 1rem;
+			border: 1px solid var(--crs-border);
+			border-radius: var(--crs-radius);
+			background: var(--crs-surface);
+		}
+
+		.crs-search__facet {
+			grid-column: span 4;
+			display: flex;
+			flex-direction: column;
+			gap: .375rem;
+			min-width: 0;
+			margin: 0;
+			padding: 0;
+			border: 0;
+		}
+
+		.crs-search__facet--quarter {
+			grid-column: span 3;
+		}
+
+		.crs-search__facet--third {
+			grid-column: span 4;
+		}
+
+		.crs-search__facet--half {
+			grid-column: span 6;
+		}
+
+		.crs-search__facet--full {
+			grid-column: 1 / -1;
+		}
+
+		@media (max-width: 40rem) {
+			.crs-search__facet {
+				grid-column: 1 / -1;
+			}
+
+			.crs-search__facet--quarter {
+				grid-column: span 6;
+			}
+		}
+
+		.crs-search__label {
+			padding: 0;
+			color: var(--crs-muted);
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .05em;
+			text-transform: uppercase;
+		}
+
+		.crs-search__facet--range {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: .5rem .75rem;
+		}
+
+		.crs-search__facet--range .crs-search__label {
+			margin-bottom: .375rem;
+		}
+
+		/* From and To sit in front of their inputs, so ranges line up with the facets next to them */
+		.crs-search__bound {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			min-width: 0;
+			color: var(--crs-muted);
+			font-size: .8125rem;
+		}
+
+		.crs-search__bound span {
+			flex-shrink: 0;
+		}
+
+		.crs-search__facet select,
+		.crs-search__facet input {
+			width: 100%;
+			min-width: 0;
+			height: 2.5rem;
+			padding: 0 .75rem;
+			border: 1px solid var(--crs-border);
+			border-radius: calc(var(--crs-radius) * .6);
+			background-color: var(--crs-background);
+			color: var(--crs-text);
+			font: inherit;
+			font-size: .9375rem;
+		}
+
+		.crs-search__facet select {
+			appearance: none;
+			padding-right: 2.25rem;
+			background: var(--crs-background) no-repeat right .75rem center / .75rem;
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%235b6770' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E");
+			cursor: pointer;
+		}
+
+		/* Active filters, each removable */
+		.crs-search__active {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: .5rem;
+			flex-basis: 100%;
+		}
+
+		.crs-search__chip {
+			display: inline-flex;
+			align-items: center;
+			gap: .5rem;
+			padding: .3125rem .5rem .3125rem .75rem;
+			border: 1px solid color-mix(in srgb, var(--crs-accent) 35%, transparent);
+			border-radius: 999px;
+			background: color-mix(in srgb, var(--crs-accent) 10%, transparent);
+			color: var(--crs-text);
+			font-size: .875rem;
+			text-decoration: none;
+		}
+
+		.crs-search__chip span:last-child {
+			display: grid;
+			place-items: center;
+			width: 1.25rem;
+			height: 1.25rem;
+			border-radius: 50%;
+			color: var(--crs-accent);
+			font-size: 1rem;
+			line-height: 1;
+		}
+
+		.crs-search__chip:hover span:last-child {
+			background: var(--crs-accent);
+			color: #fff;
+		}
+
+		.crs-search__clear {
+			color: var(--crs-muted);
+			font-size: .875rem;
+		}
+
+		.crs-search__clear:hover {
+			color: var(--crs-accent);
+		}
+
+		/* Results */
+		.crs-results {
+			margin-top: 2.5rem;
+		}
+
+		.crs-results__summary {
+			margin: 0 0 1rem;
+			color: var(--crs-muted);
+			font-size: .9375rem;
+		}
+
+		.crs-results__summary strong {
+			color: var(--crs-text);
+		}
+
+		.crs-results__list {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			border: 1px solid var(--crs-border);
+			border-radius: var(--crs-radius);
+			background: var(--crs-surface);
+			overflow: hidden;
+		}
+
+		.crs-results__item + .crs-results__item {
+			border-top: 1px solid var(--crs-border);
+		}
+
+		.crs-results__link {
+			display: block;
+			padding: 1rem 1.25rem;
+			color: inherit;
+			text-decoration: none;
+			transition: background-color .15s;
+		}
+
+		.crs-results__link:hover {
+			background: color-mix(in srgb, var(--crs-accent) 6%, transparent);
+		}
+
+		.crs-results__link:focus-visible {
+			outline: 2px solid var(--crs-accent);
+			outline-offset: -2px;
+		}
+
+		.crs-results__title {
+			display: block;
+			font-size: 1.125rem;
+			font-weight: 600;
+			line-height: 1.35;
+		}
+
+		.crs-results__link:hover .crs-results__title {
+			color: var(--crs-accent);
+		}
+
+		.crs-results__meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: .25rem .75rem;
+			margin-top: .25rem;
+			color: var(--crs-muted);
+			font-size: .875rem;
+		}
+
+		.crs-results__path {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			min-width: 0;
+		}
+
+		.crs-results__type {
+			flex-shrink: 0;
+			padding: 0 .5rem;
+			border-radius: 999px;
+			background: color-mix(in srgb, var(--crs-muted) 14%, transparent);
+			font-size: .75rem;
+			font-weight: 600;
+			line-height: 1.5rem;
+		}
+
+		.crs-results__empty {
+			padding: 2.5rem 1.25rem;
+			border: 1px dashed var(--crs-border);
+			border-radius: var(--crs-radius);
+			color: var(--crs-muted);
+			text-align: center;
+		}
+
+		.crs-results__empty p {
+			margin: 0;
+		}
+
+		.crs-results__pagination {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 1rem;
+			margin-top: 1.5rem;
+			color: var(--crs-muted);
+			font-size: .9375rem;
+		}
+
+		.crs-results__pagination a {
+			padding: .5rem 1rem;
+			border: 1px solid var(--crs-border);
+			border-radius: 999px;
+			background: var(--crs-surface);
+			color: var(--crs-text);
+			font-weight: 600;
+			text-decoration: none;
+		}
+
+		.crs-results__pagination a:hover {
+			border-color: var(--crs-accent);
+			color: var(--crs-accent);
+		}
+	</style>
+</head>
+<body>
+	<main class="crs-search-page">
+		<p class="crs-search-page__site"><a href="{{ siteUrl }}">{{ siteName }}</a></p>
+		<h1>{{ 'Search' | t('cr-search') }}</h1>
+
+		{{ crSearchForm({
+			facets: facetOptions | keys | filter(handle => handle not in ['elementType', 'source']),
+		}) }}
+
+		{% include 'cr-search/_results' %}
+	</main>
+
+	<script>
+		// Choosing an option filters straight away. Ranges wait for Enter or the button, so typing a date doesn't search each digit.
+		document.querySelectorAll('.crs-search').forEach(form => {
+			form.addEventListener('change', event => {
+				if (event.target.matches('select')) form.requestSubmit();
+			});
+
+			// Filters left empty are left out of the URL
+			form.addEventListener('formdata', event => {
+				for (const [name, value] of [...event.formData]) {
+					if (value === '') event.formData.delete(name);
+				}
+			});
+		});
+	</script>
+</body>
+</html>

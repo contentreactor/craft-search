@@ -1,0 +1,58 @@
+{#
+	Baseline search results, to include in a site's own layout.
+	Variables: query (SearchQuery), results (SearchResults), page, pageCount, facets, facetOptions
+#}
+{% set queryParams = craft.app.request.queryParams | withoutKey('page') %}
+
+<div class="crs-results">
+	{% if results.total %}
+		<p class="crs-results__summary" role="status">
+			{{- '{total, plural, =1{One result} other{# results}}' | t('cr-search', {total: results.total}) -}}
+			{%- if query.term %} {{ 'for “{term}”' | t('cr-search', {term: query.term}) }}{% endif -%}
+			{%- if pageCount > 1 %} · {{ '{page} of {pageCount}' | t('cr-search', {page: page, pageCount: pageCount}) }}{% endif -%}
+		</p>
+	{% endif %}
+
+	{% if results.elements | length %}
+		<ol class="crs-results__list" start="{{ query.offset + 1 }}">
+			{% for element in results.elements %}
+				{# The URL's path, with its segments separated like a breadcrumb #}
+				{% set path = element.url | replace('/^https?:\\/\\/[^\\/]+/', '') | trim('/') | split('/') | join(' › ') %}
+				{% set type = element.section.name ?? element.group.name ?? null %}
+				{# A single's section has the name of its only entry #}
+				{% set type = type != element.title ? type %}
+				<li class="crs-results__item">
+					<a class="crs-results__link" target="_blank" href="{{ element.url }}">
+						<span class="crs-results__title">{{ element }}</span>
+						<span class="crs-results__meta">
+							{% if type %}<span class="crs-results__type">{{ type | t('site') }}</span>{% endif %}
+							<span class="crs-results__path">{{ path }}</span>
+						</span>
+					</a>
+				</li>
+			{% endfor %}
+		</ol>
+	{% else %}
+		<div class="crs-results__empty" role="status">
+			<p>
+				{%- if query.term -%}
+					{{ 'Nothing matches “{term}”. Try fewer or different words.' | t('cr-search', {term: query.term}) }}
+				{%- else -%}
+					{{ 'No results' | t('cr-search') }}
+				{%- endif -%}
+			</p>
+		</div>
+	{% endif %}
+
+	{% if pageCount > 1 %}
+		<nav class="crs-results__pagination" aria-label="{{ 'Pagination' | t('cr-search') }}">
+			{% if page > 1 %}
+				<a rel="prev" href="{{ craft.crSearch.searchUrl(queryParams | merge({page: page - 1})) }}">← {{ 'Previous' | t('cr-search') }}</a>
+			{% endif %}
+			<span>{{ '{page} of {pageCount}' | t('cr-search', {page: page, pageCount: pageCount}) }}</span>
+			{% if page < pageCount %}
+				<a rel="next" href="{{ craft.crSearch.searchUrl(queryParams | merge({page: page + 1})) }}">{{ 'Next' | t('cr-search') }} →</a>
+			{% endif %}
+		</nav>
+	{% endif %}
+</div>

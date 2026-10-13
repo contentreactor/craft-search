@@ -1,0 +1,113 @@
+{% extends '_layouts/cp.twig' %}
+{% set pluginName = craft.crSearch.getPluginName() %}
+{% set selectedSubnavItem = settingsScreen %}
+
+{% if title is not defined %}
+	{% set title = pluginName %}
+{% endif %}
+
+{% set crumbs = [
+	{
+		label: pluginName,
+		url: url('cr-search'),
+		icon: '@cr-search/icon-mask.svg',
+	},
+] %}
+
+{% block sidebar %}
+	<nav class="crs-nav" aria-label="{{ pluginName }}">
+		<ul>
+			{% for handle, item in craft.crSearch.getSettingsNavItems() %}
+				<li>
+					<a {% if handle == settingsScreen %}class="sel" aria-current="page"{% endif %} href="{{ url(item.url) }}">
+						<span class="crs-icon" aria-hidden="true">{{ iconSvg(item.icon) }}</span>
+						<span class="label">{{ item.label }}</span>
+					</a>
+				</li>
+			{% endfor %}
+		</ul>
+	</nav>
+{% endblock %}
+
+{% css %}
+	.crs-icon {
+		display: inline-flex;
+		flex-shrink: 0;
+		width: 1em;
+		height: 1em;
+		vertical-align: -0.125em;
+	}
+
+	.crs-icon svg {
+		width: 100%;
+		height: 100%;
+		fill: currentColor;
+	}
+
+	.crs-nav a {
+		display: flex !important;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.crs-nav .crs-icon {
+		color: var(--light-text-color, #606d7b);
+	}
+
+	.crs-nav a.sel .crs-icon {
+		color: currentColor;
+	}
+
+	.crs-card {
+		border: 1px solid var(--hairline-color, #e3e5e8);
+		border-radius: var(--large-border-radius, 8px);
+		background: var(--white, #fff);
+		padding: 16px 20px;
+		margin-bottom: 14px;
+	}
+
+	.crs-card__header {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px 10px;
+	}
+
+	.crs-card__icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 8px;
+		background: var(--gray-050, #f3f7fc);
+		color: var(--link-color, #2563eb);
+	}
+
+	.crs-card__icon svg {
+		width: 16px;
+		height: 16px;
+		fill: currentColor;
+	}
+
+	.crs-card__title {
+		margin: 0 !important;
+		font-size: 15px;
+	}
+
+	.crs-muted {
+		color: var(--light-text-color, #606d7b);
+	}
+
+	.crs-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: var(--gray-050, #f3f7fc);
+		border: 1px solid var(--hairline-color, #e3e5e8);
+		font-size: 12px;
+		white-space: nowrap;
+	}
+{% endcss %}

@@ -1,0 +1,44 @@
+{% extends 'cr-search/_layouts/settings.twig' %}
+{% import '_includes/forms.twig' as forms %}
+
+{% set settingsScreen = 'pins' %}
+{% set title = pin.id ?? false ? 'Edit Pinned Results' | t('cr-search') : 'New Pinned Results' | t('cr-search') %}
+{% set fullPageForm = true %}
+{% set sites = craft.app.sites.getAllSites() %}
+
+{% block content %}
+	{{ actionInput('cr-search/pins/save') }}
+	{{ redirectInput('cr-search/pins') }}
+	{% if pin.id ?? false %}{{ hiddenInput('pinId', pin.id) }}{% endif %}
+
+	{{ forms.textField({
+		label: 'Search Term' | t('cr-search'),
+		instructions: 'The results are pinned for searches with exactly this term, ignoring case and extra spaces.' | t('cr-search'),
+		name: 'term',
+		value: pin.term,
+		autofocus: true,
+		required: true,
+		errors: errors.term ?? null,
+	}) }}
+
+	{% if sites | length > 1 %}
+		{{ forms.selectField({
+			label: 'Site' | t('app'),
+			name: 'siteId',
+			value: pin.siteId,
+			options: [{value: '', label: 'All sites' | t('app')}] | merge(sites | map(site => {value: site.id, label: site.name | t('site')})),
+			errors: errors.siteId ?? null,
+		}) }}
+	{% endif %}
+
+	{{ forms.elementSelectField({
+		label: 'Pinned Pages' | t('cr-search'),
+		instructions: 'The pages shown first, in this order.' | t('cr-search'),
+		name: 'elementIds',
+		elementType: 'craft\\elements\\Entry',
+		elements: elements,
+		sortable: true,
+		required: true,
+		errors: errors.elementIds ?? null,
+	}) }}
+{% endblock %}
