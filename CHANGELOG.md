@@ -1,16 +1,12 @@
 # Release Notes for Search
 
-## 1.1.0 - 2026-10-08
+## 1.0.1 - 2026-10-24
 
-> [!IMPORTANT]
-> Search now comes in Lite and Pro editions, and existing installs update to Lite. Synonyms, pinned results, search analytics and the Elasticsearch index need Pro.
+### Fixed
+- The plugin class named MIT as its license. Search is licensed under the Craft License, as its `composer.json`, `LICENSE.md` and readme say.
 
-### Added
+## 1.0.0 - 2026-10-13
+
+- Initial release.
 - Lite and Pro editions. Lite has the database index, facets, excluded pages, the search results endpoint and GraphQL. Pro adds the Elasticsearch index, synonyms, pinned results and search analytics.
-
-### Changed
 - Search is licensed under the Craft License.
-- Search has a new icon.
-
-## 1.0.0 - 2026-09-25
-- Initial release

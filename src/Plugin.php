@@ -58,7 +58,8 @@ use yii\web\Response;
  * @method static Plugin getInstance()
  * @method SearchSettings getSettings()
  * @author ContentReactor <support@contentreactor.com>
- * @license MIT
+ * @copyright ContentReactor
+ * @license https://craftcms.github.io/license/ Craft License
  */
 class Plugin extends BasePlugin
 {
