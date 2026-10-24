@@ -1,5 +1,10 @@
 # Release Notes for Search
 
+## 1.1.0 - 2026-10-24
+
+### Fixed
+- Bumped version to avoid conflicts.
+
 ## 1.0.1 - 2026-10-24
 
 ### Fixed
